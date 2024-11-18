@@ -57,7 +57,7 @@ class DataLoader:
         # 提取年份信息并进行one-hot编码
         data_movies['year'] = data_movies['title'].str.extract(r'\((\d{4})\)')
         year_one_hot = pd.get_dummies(data_movies['year'], prefix='year')
-
+        year_one_hot = year_one_hot.astype('int')
         # 拆分genres列，并进行one-hot编码
         genres_split = data_movies['genres'].str.get_dummies(sep='|')
 
@@ -65,7 +65,7 @@ class DataLoader:
         data_movies = pd.concat([data_movies, year_one_hot, genres_split], axis=1)
 
         # 删除原来的title和genres列
-        data_movies.drop(columns=['title', 'genres'], inplace=True)
+        data_movies.drop(columns=['title', 'genres','year'], inplace=True)
 
         # 第二部分，合并两张表，return X,y
         # 合并电影信息表和评分表

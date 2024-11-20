@@ -1,6 +1,10 @@
 import os
+from typing import Tuple, Any
+
 import pandas as pd
 import logging
+
+from pandas import DataFrame, Series
 
 # 初始化日志记录器
 logging.basicConfig(level=logging.INFO)
@@ -51,25 +55,32 @@ class DataLoader:
         else:
             logger.warning(f"缺失值统计：\n{missing}")
             return missing.to_frame(name='missing_count')
-    def one_hot_encode(self, data_movies: pd.DataFrame, data_ratings: pd.DataFrame) -> object:
 
-        # 第一部分处理data——movies，提取title中的年份做one-hot，以及为genres做one-hot
+    def one_hot_encode(self, data_movies: pd.DataFrame, data_ratings: pd.DataFrame) -> tuple[DataFrame, Any]:
+        # 先合并
+        data = pd.merge(data_ratings, data_movies, on='movieId', how='inner')
+
         # 提取年份信息并进行one-hot编码
-        data_movies['year'] = data_movies['title'].str.extract(r'\((\d{4})\)')
-        year_one_hot = pd.get_dummies(data_movies['year'], prefix='year')
+        data['year'] = data['title'].str.extract(r'\((\d{4})\)')
+        year_one_hot = pd.get_dummies(data['year'], prefix='year')
         year_one_hot = year_one_hot.astype('int')
         # 拆分genres列，并进行one-hot编码
-        genres_split = data_movies['genres'].str.get_dummies(sep='|')
+        genres_split = data['genres'].str.get_dummies(sep='|')
+
+        # 对movieId进行one-hot处理
+        newMovieId = pd.get_dummies(data['movieId'], prefix='movieId')
+        newMovieId = newMovieId.astype('int')
+        # print(newId.head(10))
+
+        #对userId进行one-hot处理
+        newUserId = pd.get_dummies(data['userId'], prefix='userId')
+        newUserId = newUserId.astype('int')
 
         # 合并处理好的数据
-        data_movies = pd.concat([data_movies, year_one_hot, genres_split], axis=1)
+        data = pd.concat([data, year_one_hot, genres_split, newMovieId,newUserId], axis=1)
 
         # 删除原来的title和genres列
-        data_movies.drop(columns=['title', 'genres','year'], inplace=True)
-
-        # 第二部分，合并两张表，return X,y
-        # 合并电影信息表和评分表
-        data = pd.merge(data_ratings, data_movies, on='movieId', how='inner')
+        data.drop(columns=['title', 'genres', 'year','userId','movieId'], inplace=True)
 
         # 将rating作为y，其他列作为X
         y = data['rating']

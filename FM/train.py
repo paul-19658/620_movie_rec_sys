@@ -25,19 +25,19 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 # print(X_train.shape)
 # print(y_train.shape)
 # # 转为float，不然报错
-X_train=X_train.astype('float32') #32会提示内存不够
+X_train=X_train.astype('float32')
 X_test=X_test.astype('float32')
 
 # 初始化模型
 k = 10
 w_reg=1e-6
-v_reg=1e-6
+v_reg=1e-4
 model=FM(k=k,w_reg=w_reg,v_reg=v_reg)
 optimizer=tf.keras.optimizers.SGD(learning_rate=0.0003)
 model.compile(loss='mse',optimizer=optimizer)
 
 # 训练
-model.fit(X_train,y_train,epochs=50)
+model.fit(X_train,y_train,epochs=40)
 
 # 评估
 predictions=model.predict(X_test)

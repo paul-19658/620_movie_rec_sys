@@ -60,16 +60,23 @@ class DataLoader:
         # 先合并
         data = pd.merge(data_ratings, data_movies, on='movieId', how='inner')
 
-        # 提取年份信息并进行one-hot编码
+        # 提取年份信息并进行分桶
         data['year'] = data['title'].str.extract(r'\((\d{4})\)')
-        year_one_hot = pd.get_dummies(data['year'], prefix='year')
-        year_one_hot = year_one_hot.astype('int')
+            # 先转为int
+        data['year'] = data['year'].astype('float')
+            # 定义分桶范围（边界需要包含最大值 2020）
+        bins = list(range(1900, 2030, 10))  # 每隔 10 年一个分桶
+        labels = [f"{start}-{end - 1}" for start, end in zip(bins[:-1], bins[1:])]
+            # 使用 pd.cut 进行分桶
+        year_bucket0 = pd.cut(data['year'], bins=bins, labels=labels, right=False)
+        year_bucket1= pd.get_dummies(year_bucket0,prefix='year_bucket').astype('int')
+
         # 拆分genres列，并进行one-hot编码
         genres_split = data['genres'].str.get_dummies(sep='|')
 
         # 对movieId进行one-hot处理
-        newMovieId = pd.get_dummies(data['movieId'], prefix='movieId')
-        newMovieId = newMovieId.astype('int')
+        # newMovieId = pd.get_dummies(data['movieId'], prefix='movieId')
+        # newMovieId = newMovieId.astype('int')
         # print(newId.head(10))
 
         #对userId进行one-hot处理
@@ -77,10 +84,10 @@ class DataLoader:
         newUserId = newUserId.astype('int')
 
         # 合并处理好的数据
-        data = pd.concat([data, year_one_hot, genres_split, newMovieId,newUserId], axis=1)
+        data = pd.concat([data, genres_split, newUserId,year_bucket1], axis=1)
 
         # 删除原来的title和genres列
-        data.drop(columns=['title', 'genres', 'year','userId','movieId'], inplace=True)
+        data.drop(columns=['title', 'genres', 'userId','year','movieId'], inplace=True)
 
         # 将rating作为y，其他列作为X
         y = data['rating']

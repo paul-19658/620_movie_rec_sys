@@ -26,8 +26,10 @@ class FM_Layer(tf.keras.layers.Layer):
         self.v=self.add_weight(name='v',
                                shape=(input_shape[-1],self.k), # m*k维的隐向量矩阵
                                initializer=tf.keras.initializers.RandomNormal(),
-                               regularizer=tf.keras.regularizers.l2(self.v_reg),
+                               # regularizer=tf.keras.regularizers.l1(self.v_reg),
                                trainable=True)
+        # 手动添加 L1 正则化项
+        self.add_loss(tf.keras.regularizers.l1(self.v_reg)(self.v))
     def call(self,inputs,**kwargs):
         '''
         FM计算逻辑
